@@ -2,19 +2,127 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pesquisa de Livros</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Book Zone</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Pesquisa de Livros</h1>
-        <input type="text" id="search-input" placeholder="Digite o título do livro">
-        <button id="search-button">Pesquisar</button>
-        <div id="results"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <img class="logo" src="assets/img/logo_book_zone.png" alt="logo da book zone">
     </div>
-    <script src="script.js"></script>
+
+    <!-- Book Shelf Header -->
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-0 px-5">
+        <h2 class="title-aside">Minha Estante</h2>
+        <div class="botaoDiv" id="addBookBtn" data-bs-toggle="modal" data-bs-target="#addBookModal">
+           <img src="assets/img/icon-plus.svg" class="icon-plus" alt=""> 
+           <h3>Adicionar novo livro</h3>
+        </div>
+    </div>
+    <hr>
+    <!-- Main Content -->
+<div class="container">
+    <!-- Mensagem de Estante Vazia -->
+    <div id="emptyShelfMessage" class="text-center my-2">
+        <!-- Ícone SVG -->
+        <img src="assets/img/estante_vazia.svg" class="estantevazia-foto" alt="imagem de pessoa procurando arquivos">
+        <!-- Texto de Estante Vazia -->
+        <h5>Sua estante está vazia. Adicione um novo livro para começar.</h5>
+    </div>
+    
+    <!-- Book Shelf -->
+    <div class="book-shelf" id="bookShelf">
+        <!-- Livros adicionados aparecerão aqui -->
+    </div>
+</div>
+
+
+     <!-- Modal de Adição de Livro -->
+        <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addBookModalLabel">Adicionar Novo Livro</h5>
+                        <!-- Removemos o botão de fechamento para que o modal só feche ao adicionar o livro -->
+                    </div>
+                    <div class="modal-body">
+                        <form id="addBookForm">
+                            <div class="mb-3">
+                                <label for="bookTitle" class="form-label">Título do livro</label>
+                                <input type="text" class="form-control" id="bookTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bookAuthor" class="form-label">Autor</label>
+                                <input type="text" class="form-control" id="bookAuthor" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bookCover" class="form-label">Selecionar imagem de capa</label>
+                                <input type="file" class="form-control" id="bookCover" accept="image/*">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Adicionar livro</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+     <!-- End Modal Adição de Livro -->
+
+     <!-- Modal de Edição de Livro -->
+        <div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editBookModalLabel">Editar Livro</h5>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editBookForm">
+                            <div class="mb-3">
+                                <label for="editBookTitle" class="form-label">Título do livro</label>
+                                <input type="text" class="form-control" id="editBookTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editBookAuthor" class="form-label">Autor</label>
+                                <input type="text" class="form-control" id="editBookAuthor" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editBookCover" class="form-label">Selecionar nova imagem de capa (opcional)</label>
+                                <input type="file" class="form-control" id="editBookCover" accept="image/*">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Salvar alterações</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <!-- End Modal Edição de Livro -->
+
+    <!-- Modal de Exclusão de Livro -->
+        <div class="modal fade" id="deleteBookModal" tabindex="-1" aria-labelledby="deleteBookModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content text-center">
+                    <div class="modal-body">
+                        <h5 class="modal-title mb-3" id="deleteBookModalLabel">Tem certeza que deseja excluir este livro da sua estante?</h5>
+                        <img id="deleteBookCoverPreview" src="" alt="Capa do Livro" class="img-fluid rounded mb-3" style="width: 150px;">
+                        <div class="d-flex justify-content-around">
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" id="confirmDeleteBook" class="btn btn-success">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <!-- End Modal de Exclusão do Livro -->
+
+    <!-- jQuery (for dynamic interactions) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/script.js"></script>
 </body>
 </html>
