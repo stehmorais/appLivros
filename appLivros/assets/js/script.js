@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function() { 
     // Função para verificar se a estante está vazia e exibir ou ocultar a mensagem
     function checkEmptyShelf() {
         if ($('#bookShelf').children().length === 0) {
@@ -8,8 +8,34 @@ $(document).ready(function() {
         }
     }
 
-    // Inicialização: verifica a estante no carregamento da página
-    checkEmptyShelf();
+    // Função para carregar os livros da API
+    function loadBooks() {
+        $.ajax({
+            url: 'http://15.229.243.132:8080/books',  // Ajuste para o endpoint correto da sua API
+            method: 'GET',
+            success: function(response) {
+                // Limpa a estante e exibe os livros retornados
+                $('#bookShelf').empty();
+                response.forEach(function(book) {
+                    $('#bookShelf').append(`
+                        <div class="book-card text-center" data-id="${book.id}">
+                           <img src="data:image/png;base64,${book.cover}" alt="Capa do Livro" class="book-cover img-fluid rounded">
+                            <p><strong class="book-title">${book.title}</strong> por <span class="book-author">${book.author}</span></p>
+                            <p class="icon-book"><a href="#" class="text-primary edit-book-btn">✏️ Editar Livro</a></p>
+                            <p class="icon-book"><a href="#" class="text-danger delete-book-btn">❌ Remover</a></p>
+                        </div>
+                    `);
+                });
+                checkEmptyShelf();  // Verifica se a estante está vazia
+            },
+            error: function(error) {
+                console.error('Erro ao carregar livros:', error);
+            }
+        });
+    }
+
+    // Inicialização: Carrega os livros ao carregar a página
+    loadBooks();
 
     // Evento de adicionar livro
     $('#addBookForm').submit(function(event) {
@@ -18,88 +44,101 @@ $(document).ready(function() {
         // Obtém os valores dos campos do formulário
         let title = $('#bookTitle').val();
         let author = $('#bookAuthor').val();
-        
-        // Adiciona um cartão de livro à estante com as classes .book-title e .book-author
-        $('#bookShelf').append(`
-            <div class="book-card text-center">
-                <img src="https://via.placeholder.com/150x200" alt="Capa do Livro" class="book-cover img-fluid rounded">
-                <p><strong class="book-title">${title}</strong> por <span class="book-author">${author}</span></p>
-                <p class="icon-book"><a href="#" class="text-primary edit-book-btn">✏️ Editar Livro</a></p>
-                <p class="icon-book"><a href="#" class="text-danger delete-book-btn">❌ Remover</a></p>
-            </div>
-        `);
-        
-        // Fecha o modal e limpa o formulário
-        $('#addBookModal').modal('hide');
-        $('#addBookForm')[0].reset();
-        
-        // Verifica a estante após a adição
-        checkEmptyShelf();
+        let cover = $('#bookCover')[0].files[0]; // Caso tenha imagem
+
+        let formData = new FormData();
+        formData.append('title', title);
+        formData.append('author', author);
+        if (cover) formData.append('cover', cover);
+
+        // Envia a requisição para criar o livro
+        $.ajax({
+            url: 'http://15.229.243.132:8080/books',  // Ajuste para o endpoint correto
+            method: 'POST',
+            data: formData,
+            processData: false,  // Necessário para enviar o arquivo corretamente
+            contentType: false,
+            success: function(response) {
+                // Fecha o modal e limpa o formulário
+                $('#addBookModal').modal('hide');
+                $('#addBookForm')[0].reset();
+                
+                // Recarrega a lista de livros
+                loadBooks();
+            },
+            error: function(error) {
+                console.error('Erro ao adicionar livro:', error);
+            }
+        });
     });
 
-    // Função para abrir o modal de edição com os dados preenchidos
+    // Função de editar livro
     $('#bookShelf').on('click', '.edit-book-btn', function(event) {
         event.preventDefault();
         
-        // Obtém o título e o autor do livro
         let bookCard = $(this).closest('.book-card');
+        let bookId = bookCard.data('id');
         let title = bookCard.find('.book-title').text();
         let author = bookCard.find('.book-author').text();
         
-        // Preenche o modal de edição com os dados atuais
         $('#editBookTitle').val(title);
         $('#editBookAuthor').val(author);
+        $('#editBookModal').data('bookId', bookId);
         
-        // Armazena o cartão do livro para uso posterior
-        $('#editBookModal').data('bookCard', bookCard);
-        
-        // Abre o modal de edição
         $('#editBookModal').modal('show');
     });
 
-    // Função para salvar as alterações do livro editado
+    // Evento para salvar as alterações do livro
     $('#editBookForm').submit(function(event) {
         event.preventDefault();
-        
-        // Obtém o título e autor atualizados
+
+        let bookId = $('#editBookModal').data('bookId');
         let title = $('#editBookTitle').val();
         let author = $('#editBookAuthor').val();
-        
-        // Atualiza os dados do livro no cartão
-        let bookCard = $('#editBookModal').data('bookCard');
-        bookCard.find('.book-title').text(title);
-        bookCard.find('.book-author').text(author);
-        
-        // Fecha o modal de edição
-        $('#editBookModal').modal('hide');
-        
-        // Opcional: limpa o formulário de edição
-        $('#editBookForm')[0].reset();
+
+        $.ajax({
+            url: `http://15.229.243.132:8080/books/${bookId}`,  // Ajuste para o endpoint correto
+            method: 'PUT',
+            data: { title: title, author: author },
+            success: function(response) {
+                $('#editBookModal').modal('hide');
+                loadBooks();  // Recarrega a lista de livros
+            },
+            error: function(error) {
+                console.error('Erro ao editar livro:', error);
+            }
+        });
     });
 
-    let bookToDelete; // Variável para armazenar o livro que será excluído
-    
-    // Função para abrir o modal de exclusão ao clicar no ícone de remoção
+    // Função de exclusão de livro
+    let bookToDelete;
     $('#bookShelf').on('click', '.delete-book-btn', function(event) {
         event.preventDefault();
         
-        // Obtém o cartão do livro que será excluído
         bookToDelete = $(this).closest('.book-card');
         
-        // Define a capa do livro no modal de exclusão
         let cover = bookToDelete.find('.book-cover').attr('src');
         $('#deleteBookCoverPreview').attr('src', cover);
         
-        // Abre o modal de exclusão
         $('#deleteBookModal').modal('show');
     });
 
-    // Função para confirmar a exclusão do livro
+    // Confirmar exclusão do livro
     $('#confirmDeleteBook').click(function() {
         if (bookToDelete) {
-            bookToDelete.remove(); // Remove o cartão do livro da estante
-            $('#deleteBookModal').modal('hide'); // Fecha o modal de exclusão
-            checkEmptyShelf(); // Verifica a estante após a exclusão
+            let bookId = bookToDelete.data('id');
+            $.ajax({
+                url: `http://15.229.243.132:8080/books/${bookId}`,  // Ajuste para o endpoint correto
+                method: 'DELETE',
+                success: function(response) {
+                    bookToDelete.remove();
+                    $('#deleteBookModal').modal('hide');
+                    checkEmptyShelf();  // Verifica se a estante está vazia
+                },
+                error: function(error) {
+                    console.error('Erro ao excluir livro:', error);
+                }
+            });
         }
     });
 });
