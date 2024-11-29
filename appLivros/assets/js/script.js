@@ -21,12 +21,11 @@ $(document).ready(function() {
                         <div class="book-card text-center" data-id="${book.id}">
                            <img src="data:image/png;base64,${book.cover}" alt="Capa do Livro" class="book-cover img-fluid rounded">
                             <p><strong class="book-title">${book.title}</strong> por <span class="book-author">${book.author}</span></p>
-                            <p class="icon-book"><a href="#" class="text-primary edit-book-btn">✏️ Editar Livro</a></p>
                             <p class="icon-book"><a href="#" class="text-danger delete-book-btn">❌ Remover</a></p>
                         </div>
                     `);
                 });
-                checkEmptyShelf();  // Verifica se a estante está vazia
+                checkEmptyShelf();  // Verifica se a estante está vazia - <p class="icon-book"><a href="#" class="text-primary edit-book-btn">✏️ Editar Livro</a></p>
             },
             error: function(error) {
                 console.error('Erro ao carregar livros:', error);
